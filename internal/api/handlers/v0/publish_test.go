@@ -24,7 +24,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-
 // Helper function to generate a valid JWT token for testing
 func generateTestJWTToken(cfg *config.Config, claims auth.JWTClaims) (string, error) {
 	jwtManager := auth.NewJWTManager(cfg)

@@ -15,7 +15,7 @@ import (
 
 // PublishServerInput represents the input for publishing a server
 type PublishServerInput struct {
-	Authorization string           `header:"Authorization" doc:"Registry JWT token (obtained from /v0/auth/token/github)" required:"true"`
+	Authorization string           `header:"Authorization" doc:"Registry JWT token (obtained from /v0/auth/token/github)" required:"false"`
 	Body          apiv0.ServerJSON `body:""`
 }
 
@@ -31,22 +31,17 @@ func RegisterPublishEndpoint(api huma.API, registry service.RegistryService, cfg
 		Summary:     "Publish MCP server",
 		Description: "Publish a new MCP server to the registry or update an existing one",
 		Tags:        []string{"publish"},
-		Security: []map[string][]string{
-			{"bearer": {}},
-		},
 	}, func(ctx context.Context, input *PublishServerInput) (*Response[apiv0.ServerJSON], error) {
-		// Extract bearer token
-		const bearerPrefix = "Bearer "
+		// Extract bearer token if provided
+		var token string
 		authHeader := input.Authorization
-		if len(authHeader) < len(bearerPrefix) || !strings.EqualFold(authHeader[:len(bearerPrefix)], bearerPrefix) {
-			return nil, huma.Error401Unauthorized("Invalid Authorization header format. Expected 'Bearer <token>'")
-		}
-		token := authHeader[len(bearerPrefix):]
-
-		// Validate Registry JWT token
-		claims, err := jwtManager.ValidateToken(ctx, token)
-		if err != nil {
-			return nil, huma.Error401Unauthorized("Invalid or expired Registry JWT token", err)
+		if authHeader != "" {
+			const bearerPrefix = "Bearer "
+			if len(authHeader) >= len(bearerPrefix) && strings.EqualFold(authHeader[:len(bearerPrefix)], bearerPrefix) {
+				token = authHeader[len(bearerPrefix):]
+			} else {
+				token = authHeader
+			}
 		}
 
 		// Perform all schema validation
@@ -54,9 +49,44 @@ func RegisterPublishEndpoint(api huma.API, registry service.RegistryService, cfg
 			return nil, huma.Error400BadRequest(err.Error())
 		}
 
-		// Verify that the token has permission to publish the server
-		if !jwtManager.HasPermission(input.Body.Name, auth.PermissionActionPublish, claims.Permissions) {
-			return nil, huma.Error403Forbidden("You do not have permission to publish this server")
+		// Get server details from request body
+		serverDetail := input.Body
+
+		// Determine auth method based on server namespace
+		var authMethod auth.Method
+		if strings.HasPrefix(serverDetail.Name, "io.github.") {
+			authMethod = auth.MethodGitHubAT // or MethodGitHubOIDC - both require GitHub auth
+		} else {
+			authMethod = auth.MethodNone
+		}
+
+		// Validate authentication only if required by auth method or if token is provided
+		if authMethod != auth.MethodNone {
+			// GitHub auth method requires authentication
+			if token == "" {
+				return nil, huma.Error401Unauthorized("Authentication is required for this server namespace")
+			}
+
+			claims, err := jwtManager.ValidateToken(ctx, token)
+			if err != nil {
+				return nil, huma.Error401Unauthorized("Invalid or expired Registry JWT token", err)
+			}
+
+			// Verify that the token's repository matches the server being published
+			if !jwtManager.HasPermission(serverDetail.Name, auth.PermissionActionPublish, claims.Permissions) {
+				return nil, huma.Error403Forbidden("You do not have permission to publish this server")
+			}
+		} else if token != "" {
+			// If a token is provided but auth method is None, validate it anyway
+			claims, err := jwtManager.ValidateToken(ctx, token)
+			if err != nil {
+				return nil, huma.Error401Unauthorized("Invalid or expired Registry JWT token", err)
+			}
+
+			// Verify that the token's repository matches the server being published
+			if !jwtManager.HasPermission(serverDetail.Name, auth.PermissionActionPublish, claims.Permissions) {
+				return nil, huma.Error403Forbidden("You do not have permission to publish this server")
+			}
 		}
 
 		// Publish the server with extensions

@@ -138,6 +138,23 @@ func (db *MemoryDB) UpdateServer(ctx context.Context, id string, server *apiv0.S
 	return server, nil
 }
 
+// Delete removes a server record by ID
+func (db *MemoryDB) Delete(ctx context.Context, id string) error {
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if _, exists := db.entries[id]; !exists {
+		return ErrNotFound
+	}
+
+	delete(db.entries, id)
+	return nil
+}
+
 // For an in-memory database, this is a no-op
 func (db *MemoryDB) Close() error {
 	return nil

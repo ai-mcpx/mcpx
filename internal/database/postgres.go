@@ -234,6 +234,26 @@ func (db *PostgreSQL) UpdateServer(ctx context.Context, id string, server *apiv0
 	return server, nil
 }
 
+// Delete removes a server record by ID
+func (db *PostgreSQL) Delete(ctx context.Context, id string) error {
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+
+	query := `DELETE FROM servers WHERE id = $1`
+	result, err := db.conn.Exec(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete server: %w", err)
+	}
+
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		return ErrNotFound
+	}
+
+	return nil
+}
+
 // Close closes the database connection
 func (db *PostgreSQL) Close() error {
 	return db.conn.Close(context.Background())

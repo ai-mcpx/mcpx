@@ -320,6 +320,53 @@ The `dnx` tool ships with the .NET 10 SDK, starting with Preview 6.
 }
 ```
 
+## Binary Package Example
+
+```json
+{
+  "server": {
+    "name": "io.example/binary-mcp-server",
+    "description": "Native binary MCP server for high-performance operations",
+    "repository": {
+      "url": "https://github.com/example/binary-mcp-server"
+    }
+  },
+  "package": {
+    "type": "binary",
+    "version": "2.1.0",
+    "binary_url": "https://github.com/example/binary-mcp-server/releases/download/v2.1.0/binary-mcp-server-linux-x64",
+    "runtime_hint": "binary",
+    "runtime_arguments": [
+      {
+        "type": "named",
+        "name": "--config",
+        "description": "Path to configuration file",
+        "default": "./config.yaml",
+        "is_required": false
+      },
+      {
+        "type": "named",
+        "name": "--log-level",
+        "description": "Logging level",
+        "default": "info",
+        "is_required": false,
+        "choices": ["debug", "info", "warn", "error"]
+      },
+      {
+        "type": "named",
+        "name": "--port",
+        "description": "Server port",
+        "default": "8080",
+        "is_required": false
+      }
+    ],
+    "checksum": {
+      "sha256": "d4e5f6789012345678901234567890123456789012345678901234567890abcd"
+    }
+  }
+}
+```
+
 ## Complex Docker Server with Multiple Arguments
 
 ```json

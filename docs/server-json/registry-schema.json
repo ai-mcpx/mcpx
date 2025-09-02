@@ -20,10 +20,12 @@
           "registry_type": {
             "enum": [
               "npm",
-              "pypi", 
+              "pypi",
               "oci",
               "nuget",
-              "mcpb"
+              "mcpb",
+              "wheel",
+              "binary"
             ]
           },
           "registry_base_url": {

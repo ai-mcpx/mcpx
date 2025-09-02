@@ -33,6 +33,8 @@ type Database interface {
 	CreateServer(ctx context.Context, server *apiv0.ServerJSON) (*apiv0.ServerJSON, error)
 	// UpdateServer updates an existing server record
 	UpdateServer(ctx context.Context, id string, server *apiv0.ServerJSON) (*apiv0.ServerJSON, error)
+	// Delete removes a server record by ID
+	Delete(ctx context.Context, id string) error
 	// Close closes the database connection
 	Close() error
 }

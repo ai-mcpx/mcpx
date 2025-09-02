@@ -224,3 +224,39 @@ func (s *registryServiceImpl) EditServer(id string, req apiv0.ServerJSON) (*apiv
 	// Return the server record directly
 	return serverRecord, nil
 }
+
+// Update updates an existing server by ID
+func (s *registryServiceImpl) Update(id string, req apiv0.ServerJSON) (*apiv0.ServerJSON, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Validate the request
+	if err := validators.ValidatePublishRequest(req); err != nil {
+		return nil, err
+	}
+
+	serverJSON := req
+
+	// Check for duplicate remote URLs
+	if err := s.validateNoDuplicateRemoteURLs(ctx, serverJSON); err != nil {
+		return nil, err
+	}
+
+	// Update server in database
+	serverRecord, err := s.db.UpdateServer(ctx, id, &serverJSON)
+	if err != nil {
+		return nil, err
+	}
+
+	// Return the server record directly
+	return serverRecord, nil
+}
+
+// Delete removes a server by ID
+func (s *registryServiceImpl) Delete(id string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Delete server from database
+	return s.db.Delete(ctx, id)
+}

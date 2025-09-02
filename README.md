@@ -163,6 +163,26 @@ The registry validates namespace ownership when publishing. E.g. to publish...:
 - `io.github.domdomegg/my-cool-mcp` you must login to GitHub as `domdomegg`, or be in a GitHub Action on domdomegg's repos
 - `me.adamjones/my-cool-mcp` you must prove ownership of `adamjones.me` via DNS or HTTP challenge
 
+## API Documentation
+
+The API is documented using Swagger/OpenAPI. This page provides a complete reference of all endpoints with request/response schemas and examples, and allows you to test the API directly from your browser.
+
+### Key Endpoints
+
+- `GET /v0/servers` - List all registered servers with pagination
+- `GET /v0/servers/{id}` - Get details of a specific server by ID
+- `PUT /v0/servers/{id}` - Update a specific server by ID
+- `DELETE /v0/servers/{id}` - Delete a specific server by ID
+- `POST /v0/publish` - Publish a new server to the registry
+
+The `PUT /v0/servers/{id}` endpoint allows updating server details including version information. When updating a version, it must be greater than the existing version to maintain version ordering.
+
+**Note**: The `DELETE /v0/servers/{id}` endpoint permanently removes a server from the registry. This action cannot be undone.
+
+## Configuration
+
+The service can be configured using environment variables. See [.env.example](./.env.example) for details.
+
 ## More documentation
 
 See the [docs](./docs) folder for more details if your question has not been answered here!

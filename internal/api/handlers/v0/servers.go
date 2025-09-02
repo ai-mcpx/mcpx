@@ -34,6 +34,11 @@ type ServerDetailInput struct {
 	ID string `path:"id" doc:"Server ID (UUID)" format:"uuid"`
 }
 
+// DeleteServerInput represents the input for deleting a server
+type DeleteServerInput struct {
+	ID string `path:"id" doc:"Server ID (UUID)" format:"uuid"`
+}
+
 // RegisterServersEndpoints registers all server-related endpoints
 func RegisterServersEndpoints(api huma.API, registry service.RegistryService) {
 	// List servers endpoint
@@ -97,6 +102,32 @@ func RegisterServersEndpoints(api huma.API, registry service.RegistryService) {
 
 		return &Response[apiv0.ServerJSON]{
 			Body: *serverDetail,
+		}, nil
+	})
+
+	// Delete server endpoint
+	huma.Register(api, huma.Operation{
+		OperationID: "delete-server",
+		Method:      http.MethodDelete,
+		Path:        "/v0/servers/{id}",
+		Summary:     "Delete MCP server",
+		Description: "Delete an existing MCP server from the registry",
+		Tags:        []string{"servers"},
+	}, func(_ context.Context, input *DeleteServerInput) (*Response[map[string]interface{}], error) {
+		// Delete the server from the registry service
+		err := registry.Delete(input.ID)
+		if err != nil {
+			if err.Error() == "record not found" {
+				return nil, huma.Error404NotFound("Server not found")
+			}
+			return nil, huma.Error500InternalServerError("Failed to delete server", err)
+		}
+
+		return &Response[map[string]interface{}]{
+			Body: map[string]interface{}{
+				"message":   "Server deleted successfully",
+				"server_id": input.ID,
+			},
 		}, nil
 	})
 }

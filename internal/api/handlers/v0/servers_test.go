@@ -3,6 +3,7 @@ package v0_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -392,4 +393,94 @@ func TestServersEndpointsIntegration(t *testing.T) {
 
 	// Verify mock expectations
 	// No expectations to verify with real service
+}
+
+func TestServersDeleteEndpoint(t *testing.T) {
+	testCases := []struct {
+		name           string
+		serverID       string
+		setupMocks     func(*MockRegistryService, string)
+		expectedStatus int
+		expectedError  string
+	}{
+		{
+			name:     "successful delete",
+			serverID: uuid.New().String(),
+			setupMocks: func(registry *MockRegistryService, serverID string) {
+				registry.Mock.On("Delete", serverID).Return(nil)
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "invalid server ID format",
+			serverID:       "invalid-uuid",
+			setupMocks:     func(_ *MockRegistryService, _ string) {},
+			expectedStatus: http.StatusUnprocessableEntity,
+			expectedError:  "validation failed",
+		},
+		{
+			name:     "server not found",
+			serverID: uuid.New().String(),
+			setupMocks: func(registry *MockRegistryService, serverID string) {
+				registry.Mock.On("Delete", serverID).Return(errors.New("record not found"))
+			},
+			expectedStatus: http.StatusNotFound,
+			expectedError:  "Server not found",
+		},
+		{
+			name:     "registry service error",
+			serverID: uuid.New().String(),
+			setupMocks: func(registry *MockRegistryService, serverID string) {
+				registry.Mock.On("Delete", serverID).Return(errors.New("database connection error"))
+			},
+			expectedStatus: http.StatusInternalServerError,
+			expectedError:  "Failed to delete server",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Create mock registry service
+			mockRegistry := new(MockRegistryService)
+			tc.setupMocks(mockRegistry, tc.serverID)
+
+			// Create a new test API
+			mux := http.NewServeMux()
+			api := humago.New(mux, huma.DefaultConfig("Test API", "1.0.0"))
+
+			// Register the servers endpoints
+			v0.RegisterServersEndpoints(api, mockRegistry)
+
+			// Create DELETE request
+			url := "/v0/servers/" + tc.serverID
+			req := httptest.NewRequest(http.MethodDelete, url, nil)
+			w := httptest.NewRecorder()
+
+			// Serve the request
+			mux.ServeHTTP(w, req)
+
+			// Check status code
+			assert.Equal(t, tc.expectedStatus, w.Code)
+
+			if tc.expectedStatus == http.StatusOK {
+				// Check content type
+				assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+
+				// Parse response body
+				var deleteResp map[string]interface{}
+				err := json.NewDecoder(w.Body).Decode(&deleteResp)
+				assert.NoError(t, err)
+
+				// Check that we got a success message
+				assert.Equal(t, "Server deleted successfully", deleteResp["message"])
+				assert.Equal(t, tc.serverID, deleteResp["server_id"])
+			} else if tc.expectedError != "" {
+				// Check error message for non-200 responses
+				assert.Contains(t, w.Body.String(), tc.expectedError)
+			}
+
+			// Verify mock expectations
+			mockRegistry.AssertExpectations(t)
+		})
+	}
 }
