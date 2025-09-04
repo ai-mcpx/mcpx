@@ -90,6 +90,37 @@ func TestValidate(t *testing.T) {
 			expectedError: validators.ErrInvalidRepositoryURL.Error(),
 		},
 		{
+			name: "server with valid Gerrit URL format",
+			serverDetail: apiv0.ServerJSON{
+				Name:        "com.example/test-server",
+				Description: "A test server",
+				Repository: model.Repository{
+					URL:    "http://127.0.0.1:8080/plugins/gitiles/example/+/refs/heads/master/test-server-python",
+					Source: "gerrit",
+					ID:     "example/test-server-python",
+				},
+				VersionDetail: model.VersionDetail{
+					Version: "1.0.0",
+				},
+			},
+			expectedError: "",
+		},
+		{
+			name: "server with invalid Gerrit URL format",
+			serverDetail: apiv0.ServerJSON{
+				Name:        "com.example/test-server",
+				Description: "A test server",
+				Repository: model.Repository{
+					URL:    "http://127.0.0.1:8080/invalid/gerrit/path",
+					Source: "gerrit",
+				},
+				VersionDetail: model.VersionDetail{
+					Version: "1.0.0",
+				},
+			},
+			expectedError: validators.ErrInvalidRepositoryURL.Error(),
+		},
+		{
 			name: "package with spaces in name",
 			serverDetail: apiv0.ServerJSON{
 				Name:        "com.example/test-server",
