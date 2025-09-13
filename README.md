@@ -9,7 +9,7 @@ The MCP registry provides MCP clients with a list of MCP servers, like an app st
 **2025-09-08 update**: The registry has launched in preview 🎉 ([announcement blog post](https://blog.modelcontextprotocol.io/posts/2025-09-08-mcp-registry-preview/)). While the system is now more stable, this is still a preview release and breaking changes or data resets may occur. A general availability (GA) release will follow later. We'd love your feedback in [GitHub discussions](https://github.com/modelcontextprotocol/registry/discussions/new?category=ideas) or in the [#registry-dev Discord](https://discord.com/channels/1358869848138059966/1369487942862504016) ([joining details here](https://modelcontextprotocol.io/community/communication)).
 
 Current key maintainers:
-- **Adam Jones** (Anthropic) [@domdomegg](https://github.com/domdomegg)  
+- **Adam Jones** (Anthropic) [@domdomegg](https://github.com/domdomegg)
 - **Tadas Antanavicius** (PulseMCP) [@tadasant](https://github.com/tadasant)
 - **Toby Padilla** (GitHub) [@toby](https://github.com/toby)
 
@@ -21,7 +21,7 @@ Often (but not always) ideas flow through this pipeline:
 
 - **[Discord](https://modelcontextprotocol.io/community/communication)** - Real-time community discussions
 - **[Discussions](https://github.com/modelcontextprotocol/registry/discussions)** - Propose and discuss product/technical requirements
-- **[Issues](https://github.com/modelcontextprotocol/registry/issues)** - Track well-scoped technical work  
+- **[Issues](https://github.com/modelcontextprotocol/registry/issues)** - Track well-scoped technical work
 - **[Pull Requests](https://github.com/modelcontextprotocol/registry/pulls)** - Contribute work towards issues
 
 ### Quick start:
@@ -29,7 +29,7 @@ Often (but not always) ideas flow through this pipeline:
 #### Pre-requisites
 
 - **Docker**
-- **Go 1.24.x** 
+- **Go 1.24.x**
 - **golangci-lint v2.4.0**
 
 #### Running the server
@@ -77,7 +77,7 @@ docker run -p 8080:8080 ghcr.io/modelcontextprotocol/registry:v1.0.0
 docker run -p 8080:8080 ghcr.io/modelcontextprotocol/registry:main-20250906-abc123d
 ```
 
-**Available tags:** 
+**Available tags:**
 - **Releases**: `latest`, `v1.0.0`, `v1.1.0`, etc.
 - **Continuous**: `main` (latest main branch build)
 - **Development**: `main-<date>-<sha>` (specific commit builds)
@@ -95,6 +95,11 @@ make publisher
 # Use it!
 ./bin/mcp-publisher --help
 ```
+
+**Example server configurations** are available in the `mcpx-cli/` directory:
+- `example-server-binary.json` - Binary package distribution
+- `example-server-wheel.json` - Python wheel package distribution
+- `example-server-docker.json` - Docker image distribution
 
 See [the publisher guide](./docs/guides/publishing/publish-server.md) for more details.
 
@@ -146,10 +151,68 @@ Publishing supports multiple authentication methods:
 - **GitHub OIDC** - For publishing from GitHub Actions
 - **DNS verification** - For proving ownership of a domain and its subdomains
 - **HTTP verification** - For proving ownership of a domain
+- **Anonymous** - For publishing to anonymous namespaces (no authentication required)
 
 The registry validates namespace ownership when publishing. E.g. to publish...:
 - `io.github.domdomegg/my-cool-mcp` you must login to GitHub as `domdomegg`, or be in a GitHub Action on domdomegg's repos
 - `me.adamjones/my-cool-mcp` you must prove ownership of `adamjones.me` via DNS or HTTP challenge
+- `io.modelcontextprotocol.anonymous/my-cool-mcp` you can publish without authentication (anonymous namespace)
+
+**Note**: Authentication is automatically determined based on the server namespace. GitHub namespaces (`io.github.*`) require GitHub authentication, while other namespaces can use alternative authentication methods or anonymous publishing.
+
+### Repository Sources
+
+The registry supports multiple repository sources for hosting your MCP server code:
+
+- **GitHub** - Standard GitHub repositories (`https://github.com/user/repo`)
+- **GitLab** - Standard GitLab repositories (`https://gitlab.com/user/repo`)
+- **Gerrit** - Gerrit code review repositories (`http://host:port/project/path`)
+
+When specifying a repository in your server configuration, use the appropriate `source` field value (`github`, `gitlab`, or `gerrit`) along with the repository URL.
+
+### Package Registry Types
+
+The registry supports multiple package registry types for distributing your MCP server:
+
+- **npm** - Node.js packages via npm registry
+- **pypi** - Python packages via PyPI registry
+- **oci** - Container images via OCI-compatible registries (Docker Hub, etc.)
+- **docker** - Docker images via Docker Hub (simplified validation)
+- **nuget** - .NET packages via NuGet registry
+- **mcpb** - MCP binary packages via direct download
+- **binary** - Generic binary packages via direct download (GitHub/GitLab releases)
+- **wheel** - Python wheel packages via PyPI or direct download (GitHub/GitLab releases)
+
+**Validation Notes:**
+- **npm, pypi, nuget, mcpb**: Full validation including package existence and ownership verification
+- **oci, docker, binary, wheel**: Simplified validation for development/testing - only format validation, no HTTP checks
+
+**Development Features:**
+- **Localhost URLs**: Remote URLs can use localhost for development and testing
+- **No SHA Requirements**: Binary and wheel packages don't require file_sha256 for integrity verification
+- **No HTTP Validation**: OCI, docker, binary, and wheel packages skip HTTP accessibility checks
+
+Each package type has specific requirements for versioning, file hashing, and distribution methods. See the [API documentation](#api-documentation) for detailed schema requirements.
+
+## API Documentation
+
+The API is documented using Swagger/OpenAPI. This page provides a complete reference of all endpoints with request/response schemas and examples, and allows you to test the API directly from your browser.
+
+### Key Endpoints
+
+- `GET /v0/servers` - List all registered servers with pagination
+- `GET /v0/servers/{id}` - Get details of a specific server by ID
+- `PUT /v0/servers/{id}` - Update a specific server by ID
+- `DELETE /v0/servers/{id}` - Delete a specific server by ID
+- `POST /v0/publish` - Publish a new server to the registry
+
+The `PUT /v0/servers/{id}` endpoint allows updating server details including version information. When updating a version, it must be greater than the existing version to maintain version ordering.
+
+**Note**: The `DELETE /v0/servers/{id}` endpoint permanently removes a server from the registry. This action cannot be undone.
+
+## Configuration
+
+The service can be configured using environment variables. See [.env.example](./.env.example) for details.
 
 ## More documentation
 

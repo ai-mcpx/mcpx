@@ -14,5 +14,9 @@ type RegistryService interface {
 	// Publish a server
 	Publish(req apiv0.ServerJSON) (*apiv0.ServerJSON, error)
 	// Update an existing server
+	Update(id string, req apiv0.ServerJSON) (*apiv0.ServerJSON, error)
+	// Delete a server
+	Delete(id string) error
+	// Update an existing server (legacy method)
 	EditServer(id string, req apiv0.ServerJSON) (*apiv0.ServerJSON, error)
 }

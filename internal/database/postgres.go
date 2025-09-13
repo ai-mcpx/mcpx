@@ -50,7 +50,7 @@ func NewPostgreSQL(ctx context.Context, connectionURI string) (*PostgreSQL, erro
 		return nil, fmt.Errorf("failed to acquire connection for migrations: %w", err)
 	}
 	defer conn.Release()
-	
+
 	migrator := NewMigrator(conn.Conn())
 	if err := migrator.Migrate(ctx); err != nil {
 		return nil, fmt.Errorf("failed to run database migrations: %w", err)
@@ -264,7 +264,7 @@ func (db *PostgreSQL) UpdateServer(ctx context.Context, id string, server *apiv0
 
 	// Update the complete server record in simple table
 	query := `
-		UPDATE servers 
+		UPDATE servers
 		SET value = $1
 		WHERE id = $2
 	`
@@ -279,6 +279,30 @@ func (db *PostgreSQL) UpdateServer(ctx context.Context, id string, server *apiv0
 	}
 
 	return server, nil
+}
+
+// DeleteServer removes a server from the database
+func (db *PostgreSQL) DeleteServer(ctx context.Context, id string) error {
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+
+	// Delete the server record
+	query := `
+		DELETE FROM servers
+		WHERE id = $1
+	`
+
+	result, err := db.pool.Exec(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete server: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+
+	return nil
 }
 
 // Close closes the database connection

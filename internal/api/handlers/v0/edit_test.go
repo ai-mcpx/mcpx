@@ -20,7 +20,7 @@ import (
 	"github.com/modelcontextprotocol/registry/pkg/model"
 )
 
-func TestEditServerEndpoint(t *testing.T) {
+func TestUpdateServerEndpoint(t *testing.T) {
 	// Create registry service and insert a common test server
 	registryService := service.NewRegistryService(database.NewMemoryDB(), config.NewConfig())
 
@@ -276,11 +276,11 @@ func TestEditServerEndpoint(t *testing.T) {
 			humaConfig := huma.DefaultConfig("Test API", "1.0.0")
 			api := humago.New(mux, humaConfig)
 
-			// Register edit endpoints
+			// Register server endpoints
 			cfg := &config.Config{
 				JWTPrivateKey: "bb2c6b424005acd5df47a9e2c87f446def86dd740c888ea3efb825b23f7ef47c",
 			}
-			v0.RegisterEditEndpoints(api, registryService, cfg)
+			v0.RegisterServersEndpoints(api, registryService, cfg)
 
 			// Create request body
 			var requestBody []byte

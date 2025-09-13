@@ -45,7 +45,7 @@ func TestPrometheusHandler(t *testing.T) {
 		router.WithSkipPaths("/health", "/metrics", "/ping", "/docs"),
 	))
 	v0.RegisterHealthEndpoint(api, cfg, metrics)
-	v0.RegisterServersEndpoints(api, registryService)
+	v0.RegisterServersEndpoints(api, registryService, cfg)
 
 	// Add /metrics for Prometheus metrics using promhttp
 	mux.Handle("/metrics", metrics.PrometheusHandler())

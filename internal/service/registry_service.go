@@ -77,7 +77,7 @@ func (s *registryServiceImpl) Publish(req apiv0.ServerJSON) (*apiv0.ServerJSON, 
 	defer cancel()
 
 	// Validate the request
-	if err := validators.ValidatePublishRequest(req, s.cfg); err != nil {
+	if err := validators.ValidatePublishRequest(ctx, req, s.cfg); err != nil {
 		return nil, err
 	}
 
@@ -200,13 +200,54 @@ func (s *registryServiceImpl) getCurrentLatestVersion(existingServerVersions []*
 	return nil
 }
 
+// Update updates an existing server with new details
+func (s *registryServiceImpl) Update(id string, req apiv0.ServerJSON) (*apiv0.ServerJSON, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Validate the request
+	if err := validators.ValidatePublishRequest(ctx, req, s.cfg); err != nil {
+		return nil, err
+	}
+
+	serverJSON := req
+
+	// Check for duplicate remote URLs
+	if err := s.validateNoDuplicateRemoteURLs(ctx, serverJSON); err != nil {
+		return nil, err
+	}
+
+	// Update server in database
+	serverRecord, err := s.db.UpdateServer(ctx, id, &serverJSON)
+	if err != nil {
+		return nil, err
+	}
+
+	// Return the server record directly
+	return serverRecord, nil
+}
+
+// Delete deletes a server from the registry
+func (s *registryServiceImpl) Delete(id string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Delete server from database
+	err := s.db.DeleteServer(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // EditServer updates an existing server with new details (admin operation)
 func (s *registryServiceImpl) EditServer(id string, req apiv0.ServerJSON) (*apiv0.ServerJSON, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	// Validate the request
-	if err := validators.ValidatePublishRequest(req, s.cfg); err != nil {
+	if err := validators.ValidatePublishRequest(ctx, req, s.cfg); err != nil {
 		return nil, err
 	}
 

@@ -2,11 +2,14 @@ package model
 
 // Registry Types - supported package registry types
 const (
-	RegistryTypeNPM   = "npm"
-	RegistryTypePyPI  = "pypi"
-	RegistryTypeOCI   = "oci"
-	RegistryTypeNuGet = "nuget"
-	RegistryTypeMCPB  = "mcpb"
+	RegistryTypeNPM    = "npm"
+	RegistryTypePyPI   = "pypi"
+	RegistryTypeOCI    = "oci"
+	RegistryTypeDocker = "docker"
+	RegistryTypeNuGet  = "nuget"
+	RegistryTypeMCPB   = "mcpb"
+	RegistryTypeBinary = "binary"
+	RegistryTypeWheel  = "wheel"
 )
 
 // Registry Base URLs - supported package registry base URLs
@@ -28,8 +31,10 @@ const (
 
 // Runtime Hints - supported package runtime hints
 const (
-	RuntimeHintNPX    = "npx"
-	RuntimeHintUVX    = "uvx"
-	RuntimeHintDocker = "docker"
-	RuntimeHintDNX    = "dnx"
+	RuntimeHintNPX     = "npx"
+	RuntimeHintUVX     = "uvx"
+	RuntimeHintDocker  = "docker"
+	RuntimeHintDNX     = "dnx"
+	RuntimeHintBinary  = "binary"
+	RuntimeHintWheel   = "wheel"
 )

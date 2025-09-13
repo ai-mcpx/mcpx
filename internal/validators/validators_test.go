@@ -1,6 +1,7 @@
 package validators_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -92,6 +93,33 @@ func TestValidate(t *testing.T) {
 				},
 			},
 			expectedError: "",
+		},
+		{
+			name: "server with valid Gerrit URL format",
+			serverDetail: apiv0.ServerJSON{
+				Name:        "com.example/test-server",
+				Description: "A test server",
+				Repository: model.Repository{
+					URL:    "http://127.0.0.1:8080/plugins/gitiles/example/+/refs/heads/master/test-server-python",
+					Source: "gerrit",
+					ID:     "example/test-server-python",
+				},
+				Version: "1.0.0",
+			},
+			expectedError: "",
+		},
+		{
+			name: "server with invalid Gerrit URL format",
+			serverDetail: apiv0.ServerJSON{
+				Name:        "com.example/test-server",
+				Description: "A test server",
+				Repository: model.Repository{
+					URL:    "http://127.0.0.1:8080/invalid/gerrit/path",
+					Source: "gerrit",
+				},
+				Version: "1.0.0",
+			},
+			expectedError: validators.ErrInvalidRepositoryURL.Error(),
 		},
 		{
 			name: "Version rejects wildcard and x-range",
@@ -1452,7 +1480,7 @@ func TestValidate_RegistryTypesAndUrls(t *testing.T) {
 				},
 			}
 
-			err := validators.ValidatePublishRequest(serverJSON, &config.Config{
+			err := validators.ValidatePublishRequest(context.Background(), serverJSON, &config.Config{
 				EnableRegistryValidation: true,
 			})
 			if tc.expectError {

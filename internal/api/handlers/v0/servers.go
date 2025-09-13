@@ -3,13 +3,17 @@ package v0
 import (
 	"context"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
+	"github.com/modelcontextprotocol/registry/internal/auth"
+	"github.com/modelcontextprotocol/registry/internal/config"
 	"github.com/modelcontextprotocol/registry/internal/database"
 	"github.com/modelcontextprotocol/registry/internal/service"
 	apiv0 "github.com/modelcontextprotocol/registry/pkg/api/v0"
+	"github.com/modelcontextprotocol/registry/pkg/model"
 )
 
 // ListServersInput represents the input for listing servers
@@ -26,9 +30,29 @@ type ServerDetailInput struct {
 	ID string `path:"id" doc:"Server ID (UUID)" format:"uuid"`
 }
 
+// UpdateServerInput represents the input for updating a server
+type UpdateServerInput struct {
+	ID            string           `path:"id" doc:"Server ID (UUID)" format:"uuid"`
+	Authorization string           `header:"Authorization" doc:"Registry JWT token" required:"false"`
+	Body          apiv0.ServerJSON `body:""`
+}
+
+// DeleteServerInput represents the input for deleting a server
+type DeleteServerInput struct {
+	ID            string `path:"id" doc:"Server ID (UUID)" format:"uuid"`
+	Authorization string `header:"Authorization" doc:"Registry JWT token" required:"false"`
+}
+
 // RegisterServersEndpoints registers all server-related endpoints
-func RegisterServersEndpoints(api huma.API, registry service.RegistryService) {
-	// List servers endpoint
+func RegisterServersEndpoints(api huma.API, registry service.RegistryService, cfg *config.Config) {
+	registerListServersEndpoint(api, registry)
+	registerGetServerEndpoint(api, registry)
+	registerUpdateServerEndpoint(api, registry, cfg)
+	registerDeleteServerEndpoint(api, registry, cfg)
+}
+
+// registerListServersEndpoint registers the list servers endpoint
+func registerListServersEndpoint(api huma.API, registry service.RegistryService) {
 	huma.Register(api, huma.Operation{
 		OperationID: "list-servers",
 		Method:      http.MethodGet,
@@ -91,8 +115,10 @@ func RegisterServersEndpoints(api huma.API, registry service.RegistryService) {
 			},
 		}, nil
 	})
+}
 
-	// Get server details endpoint
+// registerGetServerEndpoint registers the get server details endpoint
+func registerGetServerEndpoint(api huma.API, registry service.RegistryService) {
 	huma.Register(api, huma.Operation{
 		OperationID: "get-server",
 		Method:      http.MethodGet,
@@ -104,7 +130,7 @@ func RegisterServersEndpoints(api huma.API, registry service.RegistryService) {
 		// Get the server details from the registry service
 		serverDetail, err := registry.GetByID(input.ID)
 		if err != nil {
-			if err.Error() == "record not found" {
+			if err.Error() == database.RecordNotFoundMsg {
 				return nil, huma.Error404NotFound("Server not found")
 			}
 			return nil, huma.Error500InternalServerError("Failed to get server details", err)
@@ -112,6 +138,186 @@ func RegisterServersEndpoints(api huma.API, registry service.RegistryService) {
 
 		return &Response[apiv0.ServerJSON]{
 			Body: *serverDetail,
+		}, nil
+	})
+}
+
+// registerUpdateServerEndpoint registers the update server endpoint
+func registerUpdateServerEndpoint(api huma.API, registry service.RegistryService, cfg *config.Config) {
+	huma.Register(api, huma.Operation{
+		OperationID: "update-server",
+		Method:      http.MethodPut,
+		Path:        "/v0/servers/{id}",
+		Summary:     "Update MCP server",
+		Description: "Update an existing MCP server in the registry",
+		Tags:        []string{"servers"},
+		Security: []map[string][]string{
+			{"bearer": {}},
+		},
+	}, func(ctx context.Context, input *UpdateServerInput) (*Response[apiv0.ServerJSON], error) {
+		// Get the existing server to check permissions
+		existingServer, err := registry.GetByID(input.ID)
+		if err != nil {
+			if err.Error() == database.RecordNotFoundMsg {
+				return nil, huma.Error404NotFound("Server not found")
+			}
+			return nil, huma.Error500InternalServerError("Failed to get server details", err)
+		}
+
+		// Create JWT manager for token validation
+		jwtManager := auth.NewJWTManager(cfg)
+
+		// Determine auth method based on server namespace
+		var authMethod auth.Method
+		if strings.HasPrefix(existingServer.Name, "io.github.") {
+			authMethod = auth.MethodGitHubAT
+		} else {
+			authMethod = auth.MethodNone
+		}
+
+		// Extract token if provided
+		var token string
+		if input.Authorization != "" {
+			const bearerPrefix = "Bearer "
+			authHeader := input.Authorization
+			if len(authHeader) < len(bearerPrefix) || !strings.EqualFold(authHeader[:len(bearerPrefix)], bearerPrefix) {
+				return nil, huma.Error401Unauthorized("Invalid Authorization header format. Expected 'Bearer <token>'")
+			}
+			token = authHeader[len(bearerPrefix):]
+		}
+
+		// Validate authentication only if required by auth method or if token is provided
+		if authMethod != auth.MethodNone {
+			// GitHub auth method requires authentication
+			if token == "" {
+				return nil, huma.Error401Unauthorized("Authentication is required for this server namespace")
+			}
+
+			claims, err := jwtManager.ValidateToken(ctx, token)
+			if err != nil {
+				return nil, huma.Error401Unauthorized("Invalid or expired Registry JWT token", err)
+			}
+
+			// Verify that the token's repository matches the server being updated
+			if !jwtManager.HasPermission(existingServer.Name, auth.PermissionActionEdit, claims.Permissions) {
+				return nil, huma.Error403Forbidden("You do not have permission to update this server")
+			}
+		} else if token != "" {
+			// If a token is provided but auth method is None, validate it anyway
+			claims, err := jwtManager.ValidateToken(ctx, token)
+			if err != nil {
+				return nil, huma.Error401Unauthorized("Invalid or expired Registry JWT token", err)
+			}
+
+			// Verify that the token's repository matches the server being updated
+			if !jwtManager.HasPermission(existingServer.Name, auth.PermissionActionEdit, claims.Permissions) {
+				return nil, huma.Error403Forbidden("You do not have permission to update this server")
+			}
+		}
+
+		// Prevent renaming servers
+		if existingServer.Name != input.Body.Name {
+			return nil, huma.Error400BadRequest("Cannot rename server")
+		}
+
+		// Prevent undeleting servers - once deleted, they stay deleted
+		if existingServer.Status == model.StatusDeleted && input.Body.Status != model.StatusDeleted {
+			return nil, huma.Error400BadRequest("Cannot change status of deleted server. Deleted servers cannot be undeleted.")
+		}
+
+		// Update the server
+		updatedServer, err := registry.Update(input.ID, input.Body)
+		if err != nil {
+			return nil, huma.Error400BadRequest("Failed to update server", err)
+		}
+
+		return &Response[apiv0.ServerJSON]{
+			Body: *updatedServer,
+		}, nil
+	})
+}
+
+// registerDeleteServerEndpoint registers the delete server endpoint
+func registerDeleteServerEndpoint(api huma.API, registry service.RegistryService, cfg *config.Config) {
+	huma.Register(api, huma.Operation{
+		OperationID: "delete-server",
+		Method:      http.MethodDelete,
+		Path:        "/v0/servers/{id}",
+		Summary:     "Delete MCP server",
+		Description: "Delete an MCP server from the registry",
+		Tags:        []string{"servers"},
+		Security: []map[string][]string{
+			{"bearer": {}},
+		},
+	}, func(ctx context.Context, input *DeleteServerInput) (*Response[struct{}], error) {
+		// Get the existing server to check permissions
+		existingServer, err := registry.GetByID(input.ID)
+		if err != nil {
+			if err.Error() == database.RecordNotFoundMsg {
+				return nil, huma.Error404NotFound("Server not found")
+			}
+			return nil, huma.Error500InternalServerError("Failed to get server details", err)
+		}
+
+		// Create JWT manager for token validation
+		jwtManager := auth.NewJWTManager(cfg)
+
+		// Determine auth method based on server namespace
+		var authMethod auth.Method
+		if strings.HasPrefix(existingServer.Name, "io.github.") {
+			authMethod = auth.MethodGitHubAT
+		} else {
+			authMethod = auth.MethodNone
+		}
+
+		// Extract token if provided
+		var token string
+		if input.Authorization != "" {
+			const bearerPrefix = "Bearer "
+			authHeader := input.Authorization
+			if len(authHeader) < len(bearerPrefix) || !strings.EqualFold(authHeader[:len(bearerPrefix)], bearerPrefix) {
+				return nil, huma.Error401Unauthorized("Invalid Authorization header format. Expected 'Bearer <token>'")
+			}
+			token = authHeader[len(bearerPrefix):]
+		}
+
+		// Validate authentication only if required by auth method or if token is provided
+		if authMethod != auth.MethodNone {
+			// GitHub auth method requires authentication
+			if token == "" {
+				return nil, huma.Error401Unauthorized("Authentication is required for this server namespace")
+			}
+
+			claims, err := jwtManager.ValidateToken(ctx, token)
+			if err != nil {
+				return nil, huma.Error401Unauthorized("Invalid or expired Registry JWT token", err)
+			}
+
+			// Verify that the token's repository matches the server being deleted
+			if !jwtManager.HasPermission(existingServer.Name, auth.PermissionActionEdit, claims.Permissions) {
+				return nil, huma.Error403Forbidden("You do not have permission to delete this server")
+			}
+		} else if token != "" {
+			// If a token is provided but auth method is None, validate it anyway
+			claims, err := jwtManager.ValidateToken(ctx, token)
+			if err != nil {
+				return nil, huma.Error401Unauthorized("Invalid or expired Registry JWT token", err)
+			}
+
+			// Verify that the token's repository matches the server being deleted
+			if !jwtManager.HasPermission(existingServer.Name, auth.PermissionActionEdit, claims.Permissions) {
+				return nil, huma.Error403Forbidden("You do not have permission to delete this server")
+			}
+		}
+
+		// Delete the server
+		err = registry.Delete(input.ID)
+		if err != nil {
+			return nil, huma.Error400BadRequest("Failed to delete server", err)
+		}
+
+		return &Response[struct{}]{
+			Body: struct{}{},
 		}, nil
 	})
 }

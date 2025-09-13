@@ -294,7 +294,10 @@ func TestServersListEndpoint(t *testing.T) {
 			api := humago.New(mux, huma.DefaultConfig("Test API", "1.0.0"))
 
 			// Register the servers endpoints
-			v0.RegisterServersEndpoints(api, registryService)
+			cfg := &config.Config{
+				JWTPrivateKey: "bb2c6b424005acd5df47a9e2c87f446def86dd740c888ea3efb825b23f7ef47c",
+			}
+			v0.RegisterServersEndpoints(api, registryService, cfg)
 
 			// Create request
 			url := "/v0/servers" + tc.queryParams
@@ -420,7 +423,10 @@ func TestServersDetailEndpoint(t *testing.T) {
 			api := humago.New(mux, huma.DefaultConfig("Test API", "1.0.0"))
 
 			// Register the servers endpoints
-			v0.RegisterServersEndpoints(api, registryService)
+			cfg := &config.Config{
+				JWTPrivateKey: "bb2c6b424005acd5df47a9e2c87f446def86dd740c888ea3efb825b23f7ef47c",
+			}
+			v0.RegisterServersEndpoints(api, registryService, cfg)
 
 			// Create request
 			url := "/v0/servers/" + tc.serverID
@@ -485,7 +491,10 @@ func TestServersEndpointsIntegration(t *testing.T) {
 	api := humago.New(mux, huma.DefaultConfig("Test API", "1.0.0"))
 
 	// Register the servers endpoints
-	v0.RegisterServersEndpoints(api, registryService)
+	cfg := &config.Config{
+		JWTPrivateKey: "bb2c6b424005acd5df47a9e2c87f446def86dd740c888ea3efb825b23f7ef47c",
+	}
+	v0.RegisterServersEndpoints(api, registryService, cfg)
 
 	// Create test server
 	server := httptest.NewServer(mux)

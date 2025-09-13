@@ -18,6 +18,11 @@ var (
 	ErrMaxServersReached = errors.New("maximum number of versions for this server reached (10000): please reach out at https://github.com/modelcontextprotocol/registry to explain your use case")
 )
 
+// Error message constants
+const (
+	RecordNotFoundMsg = "record not found"
+)
+
 // ServerFilter defines filtering options for server queries
 type ServerFilter struct {
 	Name          *string    // for finding versions of same server
@@ -38,6 +43,8 @@ type Database interface {
 	CreateServer(ctx context.Context, server *apiv0.ServerJSON) (*apiv0.ServerJSON, error)
 	// UpdateServer updates an existing server record
 	UpdateServer(ctx context.Context, id string, server *apiv0.ServerJSON) (*apiv0.ServerJSON, error)
+	// DeleteServer removes a server from the database
+	DeleteServer(ctx context.Context, id string) error
 	// Close closes the database connection
 	Close() error
 }
