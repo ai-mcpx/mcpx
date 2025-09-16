@@ -9,8 +9,7 @@ import (
 	"github.com/modelcontextprotocol/registry/pkg/model"
 )
 
-func ValidateWheel(ctx context.Context, pkg model.Package, _ string) error {
-
+func ValidateWheel(_ context.Context, pkg model.Package, _ string) error {
 	err := validateWheelURL(pkg.Identifier)
 	if err != nil {
 		return err

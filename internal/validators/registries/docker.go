@@ -11,7 +11,7 @@ import (
 // Docker validation simplified for development/testing
 
 // ValidateDocker validates Docker image format (simplified for development/testing)
-func ValidateDocker(ctx context.Context, pkg model.Package, serverName string) error {
+func ValidateDocker(_ context.Context, pkg model.Package, _ string) error {
 	// Set default registry base URL if empty
 	if pkg.RegistryBaseURL == "" {
 		pkg.RegistryBaseURL = model.RegistryURLDocker

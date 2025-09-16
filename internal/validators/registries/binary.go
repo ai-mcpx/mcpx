@@ -9,8 +9,7 @@ import (
 	"github.com/modelcontextprotocol/registry/pkg/model"
 )
 
-func ValidateBinary(ctx context.Context, pkg model.Package, _ string) error {
-
+func ValidateBinary(_ context.Context, pkg model.Package, _ string) error {
 	err := validateBinaryURL(pkg.Identifier)
 	if err != nil {
 		return err
@@ -48,26 +47,8 @@ func validateBinaryURL(fullURL string) error {
 		return fmt.Errorf("invalid binary package URL: %w", err)
 	}
 
-	host := strings.ToLower(parsedURL.Host)
-	allowedHosts := []string{
-		githubHost,
-		githubWWWHost,
-		gitlabHost,
-		gitlabWWWHost,
-	}
-
-	isAllowed := false
-	for _, allowed := range allowedHosts {
-		if host == allowed {
-			isAllowed = true
-			break
-		}
-	}
-
-	if !isAllowed {
-		return fmt.Errorf("binary packages must be hosted on allowlisted providers (GitHub or GitLab). Host '%s' is not allowed", host)
-	}
-
+	// Remove allowlist restriction - allow binary packages from any host
+	_ = strings.ToLower(parsedURL.Host) // Keep for potential future use
 
 	return nil
 }
@@ -87,6 +68,7 @@ func inferBinaryRegistryBaseURL(identifier string) (string, error) {
 	case gitlabHost, gitlabWWWHost:
 		return model.RegistryURLGitLab, nil
 	default:
-		return "", fmt.Errorf("invalid host for binary package: %s, expected github or gitlab", host)
+		// For other hosts, return the base URL with scheme and host
+		return fmt.Sprintf("%s://%s", parsedURL.Scheme, parsedURL.Host), nil
 	}
 }
