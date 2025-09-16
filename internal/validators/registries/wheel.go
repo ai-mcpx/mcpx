@@ -47,31 +47,13 @@ func validateWheelURL(fullURL string) error {
 		return fmt.Errorf("invalid wheel package URL: %w", err)
 	}
 
-	host := strings.ToLower(parsedURL.Host)
-	allowedHosts := []string{
-		githubHost,
-		githubWWWHost,
-		gitlabHost,
-		gitlabWWWHost,
-	}
-
-	isAllowed := false
-	for _, allowed := range allowedHosts {
-		if host == allowed {
-			isAllowed = true
-			break
-		}
-	}
-
-	if !isAllowed {
-		return fmt.Errorf("wheel packages must be hosted on allowlisted providers (GitHub or GitLab). Host '%s' is not allowed", host)
-	}
+	// Skip host allowlist validation to allow more flexible hosting options
+	// This allows wheel packages to be hosted on any provider
 
 	// Validate that the filename ends with .whl
 	if !strings.HasSuffix(strings.ToLower(parsedURL.Path), ".whl") {
 		return fmt.Errorf("wheel package URL must end with .whl extension: %s", fullURL)
 	}
-
 
 	return nil
 }
@@ -91,6 +73,7 @@ func inferWheelRegistryBaseURL(identifier string) (string, error) {
 	case gitlabHost, gitlabWWWHost:
 		return model.RegistryURLGitLab, nil
 	default:
-		return "", fmt.Errorf("invalid host for wheel package: %s, expected github or gitlab", host)
+		// For non-GitHub/GitLab hosts, use the scheme and host as the base URL
+		return fmt.Sprintf("%s://%s", parsedURL.Scheme, parsedURL.Host), nil
 	}
 }

@@ -3,7 +3,6 @@ package registries
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/modelcontextprotocol/registry/pkg/model"
 )
@@ -23,24 +22,9 @@ func ValidateDocker(_ context.Context, pkg model.Package, _ string) error {
 			pkg.RegistryBaseURL, model.RegistryTypeDocker, model.RegistryURLDocker)
 	}
 
-	// Parse image reference (namespace/repo or repo) to validate format
-	_, _, err := parseDockerImageReference(pkg.Identifier)
-	if err != nil {
-		return fmt.Errorf("invalid Docker image reference: %w", err)
-	}
+	// Skip image reference validation to allow more flexible Docker image identifiers
+	// This allows for custom registries and more complex image naming schemes
 
 	// Skip HTTP validation for development/testing
 	return nil
-}
-
-func parseDockerImageReference(identifier string) (string, string, error) {
-	parts := strings.Split(identifier, "/")
-	switch len(parts) {
-	case 2:
-		return parts[0], parts[1], nil
-	case 1:
-		return "library", parts[0], nil
-	default:
-		return "", "", fmt.Errorf("invalid image reference: %s", identifier)
-	}
 }
