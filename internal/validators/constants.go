@@ -36,4 +36,19 @@ type RepositorySource string
 const (
 	SourceGitHub RepositorySource = "github"
 	SourceGitLab RepositorySource = "gitlab"
+	SourceGerrit RepositorySource = "gerrit"
+)
+
+// RegistryType represents valid registry types
+type RegistryType string
+
+const (
+	RegistryTypeNPM    RegistryType = "npm"
+	RegistryTypePyPI   RegistryType = "pypi"
+	RegistryTypeOCI    RegistryType = "oci"
+	RegistryTypeDocker RegistryType = "docker"
+	RegistryTypeNuGet  RegistryType = "nuget"
+	RegistryTypeMCPB   RegistryType = "mcpb"
+	RegistryTypeBinary RegistryType = "binary"
+	RegistryTypeWheel  RegistryType = "wheel"
 )

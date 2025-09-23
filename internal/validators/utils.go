@@ -21,6 +21,10 @@ func IsValidRepositoryURL(source RepositorySource, url string) bool {
 		return githubURLRegex.MatchString(url)
 	case SourceGitLab:
 		return gitlabURLRegex.MatchString(url)
+	case SourceGerrit:
+		// For Gerrit, we'll use a more flexible validation since Gerrit URLs can vary
+		// This is a basic validation that checks for a valid URL structure
+		return IsValidURL(url)
 	}
 	return false
 }

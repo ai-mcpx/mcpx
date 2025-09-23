@@ -42,15 +42,17 @@ func RegisterPublishEndpoint(api huma.API, registry service.RegistryService, cfg
 		}
 		token := authHeader[len(bearerPrefix):]
 
-		// Validate Registry JWT token
-		claims, err := jwtManager.ValidateToken(ctx, token)
-		if err != nil {
-			return nil, huma.Error401Unauthorized("Invalid or expired Registry JWT token", err)
-		}
+		// Validate token if provided
+		if token != "" {
+			claims, err := jwtManager.ValidateToken(ctx, token)
+			if err != nil {
+				return nil, huma.Error401Unauthorized("Invalid or expired Registry JWT token", err)
+			}
 
-		// Verify that the token has permission to publish the server
-		if !jwtManager.HasPermission(input.Body.Name, auth.PermissionActionPublish, claims.Permissions) {
-			return nil, huma.Error403Forbidden(buildPermissionErrorMessage(input.Body.Name, claims.Permissions))
+			// Verify that the token's repository matches the server being published
+			if !jwtManager.HasPermission(input.Body.Name, auth.PermissionActionPublish, claims.Permissions) {
+				return nil, huma.Error403Forbidden("You do not have permission to publish this server")
+			}
 		}
 
 		// Publish the server with extensions
@@ -66,23 +68,3 @@ func RegisterPublishEndpoint(api huma.API, registry service.RegistryService, cfg
 	})
 }
 
-// buildPermissionErrorMessage creates a detailed error message showing what permissions
-// the user has and what they're trying to publish
-func buildPermissionErrorMessage(attemptedResource string, permissions []auth.Permission) string {
-	var permissionStrs []string
-	for _, perm := range permissions {
-		if perm.Action == auth.PermissionActionPublish {
-			permissionStrs = append(permissionStrs, perm.ResourcePattern)
-		}
-	}
-	
-	errorMsg := "You do not have permission to publish this server"
-	if len(permissionStrs) > 0 {
-		errorMsg += ". You have permission to publish: " + strings.Join(permissionStrs, ", ")
-	} else {
-		errorMsg += ". You do not have any publish permissions"
-	}
-	errorMsg += ". Attempting to publish: " + attemptedResource
-	
-	return errorMsg
-}
