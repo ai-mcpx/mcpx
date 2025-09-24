@@ -3,6 +3,7 @@ package registries
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/modelcontextprotocol/registry/pkg/model"
 )
@@ -16,10 +17,13 @@ func ValidateDocker(_ context.Context, pkg model.Package, _ string) error {
 		pkg.RegistryBaseURL = model.RegistryURLDocker
 	}
 
-	// Validate registry type and base URL match
-	if err := validateRegistryTypeAndURL(
-		pkg.RegistryBaseURL, model.RegistryTypeOCI, model.RegistryURLDocker); err != nil {
-		return err
+	// Skip strict registry type and base URL validation to allow custom Docker registries
+	// This allows for private registries and more flexible Docker image identifiers
+	// Only validate that the base URL is a valid URL format
+	if pkg.RegistryBaseURL != "" {
+		if err := validateDockerRegistryURL(pkg.RegistryBaseURL); err != nil {
+			return err
+		}
 	}
 
 	// Skip image reference validation to allow more flexible Docker image identifiers
@@ -29,11 +33,23 @@ func ValidateDocker(_ context.Context, pkg model.Package, _ string) error {
 	return nil
 }
 
-// validateRegistryTypeAndURL validates that the registry type and base URL match
-func validateRegistryTypeAndURL(registryBaseURL, registryType, expectedURL string) error {
-	if registryBaseURL != expectedURL {
-		return fmt.Errorf("registry type and base URL do not match: '%s' is not valid for registry type '%s'. Expected: %s",
-			registryBaseURL, registryType, expectedURL)
+// validateDockerRegistryURL validates that the registry base URL is a valid URL format
+func validateDockerRegistryURL(registryBaseURL string) error {
+	// Add https:// if no scheme is provided
+	if !strings.HasPrefix(registryBaseURL, "http://") && !strings.HasPrefix(registryBaseURL, "https://") {
+		registryBaseURL = "https://" + registryBaseURL
 	}
+
+	// Basic URL validation
+	if !strings.Contains(registryBaseURL, "://") {
+		return fmt.Errorf("invalid registry base URL format: %s", registryBaseURL)
+	}
+
+	// Check that it has a hostname
+	parts := strings.Split(registryBaseURL, "://")
+	if len(parts) != 2 || parts[1] == "" {
+		return fmt.Errorf("invalid registry base URL format: %s", registryBaseURL)
+	}
+
 	return nil
 }
