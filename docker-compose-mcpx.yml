@@ -19,6 +19,7 @@ services:
       - MCP_REGISTRY_OIDC_EXTRA_CLAIMS=${MCP_REGISTRY_OIDC_EXTRA_CLAIMS:-[{"hd":"modelcontextprotocol.io"}]}
       - MCP_REGISTRY_OIDC_EDIT_PERMISSIONS=${MCP_REGISTRY_OIDC_EDIT_PERMISSIONS:-*}
       - MCP_REGISTRY_OIDC_PUBLISH_PERMISSIONS=${MCP_REGISTRY_OIDC_PUBLISH_PERMISSIONS:-*}
+      - MCP_REGISTRY_ENABLE_REGISTRY_VALIDATION=${MCP_REGISTRY_ENABLE_REGISTRY_VALIDATION:-false}
     ports:
       - 8080:8080
     networks:
@@ -33,8 +34,6 @@ services:
       POSTGRES_USER: mcpregistry
       POSTGRES_PASSWORD: mcpregistry
       PGDATA: /var/lib/postgresql/data/pgdata
-    volumes:
-      - './.db:/var/lib/postgresql/data'
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U mcpregistry -d mcp-registry"]
       interval: 1s
