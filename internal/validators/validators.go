@@ -79,7 +79,8 @@ func ValidateServerJSON(serverJSON *apiv0.ServerJSON) error {
 	}
 
 	// Validate website URL if provided
-	if err := validateWebsiteURL(serverJSON.WebsiteURL); err != nil {
+	// Skip websiteUrl validation for binary, docker, and wheel registries to allow flexible URL schemes
+	if err := validateWebsiteURL(serverJSON.WebsiteURL, serverJSON.Packages); err != nil {
 		return err
 	}
 
@@ -114,6 +115,7 @@ func ValidateServerJSON(serverJSON *apiv0.ServerJSON) error {
 	}
 
 	// Validate reverse-DNS namespace matching for website URL
+	// Skip namespace validation for binary, docker, and wheel registries to allow flexible URLs
 	if err := validateWebsiteURLNamespaceMatch(*serverJSON); err != nil {
 		return err
 	}
@@ -141,10 +143,20 @@ func validateRepository(obj *model.Repository) error {
 	return nil
 }
 
-func validateWebsiteURL(websiteURL string) error {
+func validateWebsiteURL(websiteURL string, packages []model.Package) error {
 	// Skip validation if website URL is not provided (optional field)
 	if websiteURL == "" {
 		return nil
+	}
+
+	// Skip websiteUrl validation for binary, docker, and wheel registries
+	// These registry types often use HTTP URLs (e.g., Gerrit, internal registries)
+	for _, pkg := range packages {
+		if pkg.RegistryType == model.RegistryTypeBinary ||
+			pkg.RegistryType == model.RegistryTypeDocker ||
+			pkg.RegistryType == model.RegistryTypeWheel {
+			return nil
+		}
 	}
 
 	// Parse the URL to ensure it's valid
@@ -158,7 +170,7 @@ func validateWebsiteURL(websiteURL string) error {
 		return fmt.Errorf("websiteUrl must be absolute (include scheme): %s", websiteURL)
 	}
 
-	// Only allow HTTPS scheme for security
+	// Only allow HTTPS scheme for security (for other registry types)
 	if parsedURL.Scheme != SchemeHTTPS {
 		return fmt.Errorf("websiteUrl must use https scheme: %s", websiteURL)
 	}
@@ -528,6 +540,16 @@ func validateWebsiteURLNamespaceMatch(serverJSON apiv0.ServerJSON) error {
 	// Skip validation if website URL is not provided
 	if serverJSON.WebsiteURL == "" {
 		return nil
+	}
+
+	// Skip namespace validation for binary, docker, and wheel registries
+	// These registry types often use URLs that don't match the namespace domain
+	for _, pkg := range serverJSON.Packages {
+		if pkg.RegistryType == model.RegistryTypeBinary ||
+			pkg.RegistryType == model.RegistryTypeDocker ||
+			pkg.RegistryType == model.RegistryTypeWheel {
+			return nil
+		}
 	}
 
 	namespace := serverJSON.Name

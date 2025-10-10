@@ -37,6 +37,7 @@ type RepositorySource string
 const (
 	SourceGitHub RepositorySource = "github"
 	SourceGitLab RepositorySource = "gitlab"
+	SourceGerrit RepositorySource = "gerrit"
 )
 
 const (

@@ -8,10 +8,15 @@ import (
 
 var (
 	// Regular expressions for validating repository URLs
-	// These regex patterns ensure the URL is in the format of a valid GitHub or GitLab repository
-	// For example:	// - GitHub: https://github.com/user/repo
+	// These regex patterns ensure the URL is in the format of a valid GitHub, GitLab repository
+	// Gerrit repositories skip URL validation to allow flexible Gerrit setups
+	// For example:
+	// - GitHub: https://github.com/user/repo
+	// - GitLab: https://gitlab.com/user/repo
+	// - Gerrit: Any valid URL format (validation skipped)
 	githubURLRegex = regexp.MustCompile(`^https?://(www\.)?github\.com/[\w.-]+/[\w.-]+/?$`)
 	gitlabURLRegex = regexp.MustCompile(`^https?://(www\.)?gitlab\.com/[\w.-]+/[\w.-]+/?$`)
+	// gerritURLRegex removed - Gerrit repositories skip URL validation
 )
 
 // IsValidRepositoryURL checks if the given URL is valid for the specified repository source
@@ -21,6 +26,10 @@ func IsValidRepositoryURL(source RepositorySource, url string) bool {
 		return githubURLRegex.MatchString(url)
 	case SourceGitLab:
 		return gitlabURLRegex.MatchString(url)
+	case SourceGerrit:
+		// Skip URL validation for Gerrit repositories to allow flexible Gerrit setups
+		// Gerrit installations can have various URL formats and configurations
+		return true
 	}
 	return false
 }
