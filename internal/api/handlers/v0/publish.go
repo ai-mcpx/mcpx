@@ -73,9 +73,9 @@ func RegisterPublishEndpoint(api huma.API, pathPrefix string, registry service.R
 
 	// Register update endpoint
 	huma.Register(api, huma.Operation{
-		OperationID: "update-server",
+		OperationID: "update-server" + strings.ReplaceAll(pathPrefix, "/", "-"),
 		Method:      http.MethodPut,
-		Path:        "/v0/publish",
+		Path:        pathPrefix + "/publish",
 		Summary:     "Update MCP server",
 		Description: "Update an existing MCP server in the registry",
 		Tags:        []string{"publish"},
