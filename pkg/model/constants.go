@@ -2,11 +2,14 @@ package model
 
 // Registry Types - supported package registry types
 const (
-	RegistryTypeNPM   = "npm"
-	RegistryTypePyPI  = "pypi"
-	RegistryTypeOCI   = "oci"
-	RegistryTypeNuGet = "nuget"
-	RegistryTypeMCPB  = "mcpb"
+	RegistryTypeNPM    = "npm"
+	RegistryTypePyPI   = "pypi"
+	RegistryTypeOCI    = "oci"
+	RegistryTypeNuGet  = "nuget"
+	RegistryTypeMCPB   = "mcpb"
+	RegistryTypeDocker = "docker"
+	RegistryTypeBinary = "binary"
+	RegistryTypeWheel  = "wheel"
 )
 
 // Registry Base URLs - supported package registry base URLs
@@ -16,6 +19,7 @@ const (
 	RegistryURLNuGet  = "https://api.nuget.org"
 	RegistryURLGitHub = "https://github.com"
 	RegistryURLGitLab = "https://gitlab.com"
+	RegistryURLDocker = "https://registry-1.docker.io"
 )
 
 // Transport Types - supported remote transport protocols

@@ -8,10 +8,17 @@ import (
 
 var (
 	// Regular expressions for validating repository URLs
-	// These regex patterns ensure the URL is in the format of a valid GitHub or GitLab repository
+	// These regex patterns ensure the URL is in the format of a valid GitHub, GitLab, or Gerrit repository
 	// For example:	// - GitHub: https://github.com/user/repo
+	// - GitLab: https://gitlab.com/user/repo
+	// - Gerrit: https://gerrit.example.com/project (more flexible for self-hosted)
 	githubURLRegex = regexp.MustCompile(`^https?://(www\.)?github\.com/[\w.-]+/[\w.-]+/?$`)
 	gitlabURLRegex = regexp.MustCompile(`^https?://(www\.)?gitlab\.com/[\w.-]+/[\w.-]+/?$`)
+	// Gerrit URLs can be self-hosted, so we validate basic URL structure and path
+	// Supports optional port numbers (e.g., :8080) for self-hosted instances
+	// Path can contain + for Gitiles URLs (e.g., /plugins/gitiles/example/+/refs/heads/master)
+	// Updated pattern to handle IP addresses and complex paths
+	gerritURLRegex = regexp.MustCompile(`^https?://[\w.-]+(:\d+)?/[-\w./+]+/?$`)
 )
 
 // IsValidRepositoryURL checks if the given URL is valid for the specified repository source
@@ -21,6 +28,8 @@ func IsValidRepositoryURL(source RepositorySource, url string) bool {
 		return githubURLRegex.MatchString(url)
 	case SourceGitLab:
 		return gitlabURLRegex.MatchString(url)
+	case SourceGerrit:
+		return gerritURLRegex.MatchString(url)
 	}
 	return false
 }

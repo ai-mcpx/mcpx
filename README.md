@@ -13,8 +13,6 @@ The MCP registry provides MCP clients with a list of MCP servers, like an app st
 Current key maintainers:
 - **Adam Jones** (Anthropic) [@domdomegg](https://github.com/domdomegg)  
 - **Tadas Antanavicius** (PulseMCP) [@tadasant](https://github.com/tadasant)
-- **Toby Padilla** (GitHub) [@toby](https://github.com/toby)
-- **Radoslav (Rado) Dimitrov** (Stacklok) [@rdimitrov](https://github.com/rdimitrov)
 
 ## Contributing
 

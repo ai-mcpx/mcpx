@@ -64,6 +64,49 @@ func RegisterPublishEndpoint(api huma.API, pathPrefix string, registry service.R
 			Body: *publishedServer,
 		}, nil
 	})
+
+	// Register update endpoint
+	huma.Register(api, huma.Operation{
+		OperationID: "update-server" + strings.ReplaceAll(pathPrefix, "/", "-"),
+		Method:      http.MethodPut,
+		Path:        pathPrefix + "/publish",
+		Summary:     "Update MCP server",
+		Description: "Update an existing MCP server in the registry",
+		Tags:        []string{"publish"},
+		Security: []map[string][]string{
+			{"bearer": {}},
+		},
+	}, func(ctx context.Context, input *PublishServerInput) (*Response[apiv0.ServerResponse], error) {
+		// Extract bearer token
+		const bearerPrefix = "Bearer "
+		authHeader := input.Authorization
+		if len(authHeader) < len(bearerPrefix) || !strings.EqualFold(authHeader[:len(bearerPrefix)], bearerPrefix) {
+			return nil, huma.Error401Unauthorized("Invalid Authorization header format. Expected 'Bearer <token>'")
+		}
+		token := authHeader[len(bearerPrefix):]
+
+		// Validate Registry JWT token
+		claims, err := jwtManager.ValidateToken(ctx, token)
+		if err != nil {
+			return nil, huma.Error401Unauthorized("Invalid or expired Registry JWT token", err)
+		}
+
+		// Verify that the token has permission to publish the server
+		if !jwtManager.HasPermission(input.Body.Name, auth.PermissionActionPublish, claims.Permissions) {
+			return nil, huma.Error403Forbidden(buildPermissionErrorMessage(input.Body.Name, claims.Permissions))
+		}
+
+		// Update the server with extensions
+		updatedServer, err := registry.CreateServer(ctx, &input.Body)
+		if err != nil {
+			return nil, huma.Error400BadRequest("Failed to update server", err)
+		}
+
+		// Return the updated server response with metadata
+		return &Response[apiv0.ServerResponse]{
+			Body: *updatedServer,
+		}, nil
+	})
 }
 
 // buildPermissionErrorMessage creates a detailed error message showing what permissions

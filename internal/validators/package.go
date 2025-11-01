@@ -23,6 +23,12 @@ func ValidatePackage(ctx context.Context, pkg model.Package, serverName string) 
 		return registries.ValidateOCI(ctx, pkg, serverName)
 	case model.RegistryTypeMCPB:
 		return registries.ValidateMCPB(ctx, pkg, serverName)
+	case model.RegistryTypeDocker:
+		return registries.ValidateDocker(ctx, pkg, serverName)
+	case model.RegistryTypeBinary:
+		return registries.ValidateBinary(ctx, pkg, serverName)
+	case model.RegistryTypeWheel:
+		return registries.ValidateWheel(ctx, pkg, serverName)
 	default:
 		return fmt.Errorf("unsupported registry type: %s", pkg.RegistryType)
 	}
