@@ -127,5 +127,10 @@ func buildPermissionErrorMessage(attemptedResource string, permissions []auth.Pe
 	}
 	errorMsg += ". Attempting to publish: " + attemptedResource
 
+	// Add helpful hint for GitHub organization publishing issues
+	if strings.HasPrefix(attemptedResource, "io.github.") {
+		errorMsg += ". If you're trying to publish to a GitHub organization, you may need to make your organization membership public in your GitHub settings: https://docs.github.com/en/account-and-profile/how-tos/organization-membership/publicizing-or-hiding-organization-membership"
+	}
+
 	return errorMsg
 }

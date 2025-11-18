@@ -455,6 +455,21 @@ func TestValidate(t *testing.T) {
 			expectedError: "websiteUrl must use https scheme: ftp://example.com/docs",
 		},
 		{
+			name: "server with invalid websiteUrl - required HTTPS",
+			serverDetail: apiv0.ServerJSON{
+				Schema:      model.CurrentSchemaURL,
+				Name:        "com.example/test-server",
+				Description: "A test server",
+				Repository: &model.Repository{
+					URL:    "https://github.com/owner/repo",
+					Source: "github",
+				},
+				Version:    "1.0.0",
+				WebsiteURL: "http://example.com/docs",
+			},
+			expectedError: "websiteUrl must use https scheme: http://example.com/docs",
+		},
+		{
 			name: "server with malformed websiteUrl",
 			serverDetail: apiv0.ServerJSON{
 				Schema:      model.CurrentSchemaURL,
@@ -512,7 +527,7 @@ func TestValidate(t *testing.T) {
 				Version:    "1.0.0",
 				WebsiteURL: "https://different.com/docs",
 			},
-			expectedError: "websiteUrl https://different.com/docs does not match namespace com.example/test-server",
+			expectedError: "",
 		},
 		{
 			name: "package with spaces in name",
@@ -797,7 +812,7 @@ func TestValidate_RemoteNamespaceMatch(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "invalid - wrong domain",
+			name: "valid - different domain",
 			serverDetail: apiv0.ServerJSON{
 				Schema: model.CurrentSchemaURL,
 				Name:   "com.example/test-server",
@@ -808,23 +823,22 @@ func TestValidate_RemoteNamespaceMatch(t *testing.T) {
 					},
 				},
 			},
-			expectError: true,
-			errorMsg:    "remote URL host google.com does not match publisher domain example.com",
+			expectError: false,
 		},
 		{
-			name: "invalid - different domain entirely",
+			name: "invalid - not HTTPS",
 			serverDetail: apiv0.ServerJSON{
 				Schema: model.CurrentSchemaURL,
 				Name:   "com.microsoft/server",
 				Remotes: []model.Transport{
 					{
 						Type: "streamable-http",
-						URL:  "https://api.github.com/endpoint",
+						URL:  "http://api.github.com/endpoint",
 					},
 				},
 			},
 			expectError: true,
-			errorMsg:    "remote URL host api.github.com does not match publisher domain microsoft.com",
+			errorMsg:    "invalid remote URL: http://api.github.com/endpoint",
 		},
 		{
 			name: "invalid URL format",
@@ -880,12 +894,12 @@ func TestValidate_RemoteNamespaceMatch(t *testing.T) {
 					},
 					{
 						Type: "streamable-http",
-						URL:  "https://google.com/websocket",
+						URL:  "http://example.com/sse",
 					},
 				},
 			},
 			expectError: true,
-			errorMsg:    "remote URL host google.com does not match publisher domain example.com",
+			errorMsg:    "invalid remote URL: http://example.com/sse",
 		},
 	}
 
