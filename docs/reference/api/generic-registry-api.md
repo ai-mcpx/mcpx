@@ -3,7 +3,6 @@
 A standardized RESTful HTTP API for MCP registries to provide consistent endpoints for discovering and retrieving MCP servers.
 
 Also see:
-- For guidance consuming the API, see the [consuming guide](../../guides/consuming/use-rest-api.md).
 - For authentication and authorization, see the [registry authorization specification](./registry-authorization.md).
 
 ## Browse the Complete API Specification

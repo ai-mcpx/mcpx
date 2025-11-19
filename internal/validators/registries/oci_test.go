@@ -51,6 +51,18 @@ func TestValidateOCI_RegistryAllowlist(t *testing.T) {
 			expectError: true,
 			errorMsg:    "missing required annotation",
 		},
+		{
+			name:        "MCR should be allowed",
+			identifier:  "mcr.microsoft.com/dotnet/aspire-dashboard:9.5.0",
+			expectError: true,
+			errorMsg:    "missing required annotation",
+		},
+		{
+			name:        "ACR should be allowed",
+			identifier:  "azurearcjumpstart.azurecr.io/hello-arc:latest",
+			expectError: true,
+			errorMsg:    "missing required annotation",
+		},
 
 		// Disallowed registries
 		{

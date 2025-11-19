@@ -10,7 +10,6 @@ While the [generic server.json format](./generic-server-json.md) defines the bas
 
 - **Namespace authentication** - Servers are published under appropriate namespaces
 - **Package ownership verification** - Publishers actually control referenced packages
-- **Remote server URL match** - Remote server base urls match namespaces
 - **Restricted registry base urls** - Packages are from trusted public registries
 - **`_meta` namespace restrictions** - Restricted to `publisher` key only
 
@@ -26,10 +25,6 @@ All packages must include metadata proving the publisher owns them. This prevent
 
 For detailed verification requirements for each registry type, see the [publishing guide](../../guides/publishing/publish-server.md).
 
-## Remote Server URL Match
-
-Remote servers must use URLs that match the publisher's domain from their namespace. For example, `com.example/server` can only use remote URLs on `example.com` or its subdomains.
-
 ## Restricted Registry Base URLs
 
 Only trusted public registries are supported. Private registries and alternative mirrors are not allowed.
@@ -42,6 +37,8 @@ Only trusted public registries are supported. Private registries and alternative
   - Docker Hub (`docker.io`)
   - GitHub Container Registry (`ghcr.io`)
   - Google Artifact Registry (`*.pkg.dev`)
+  - Azure Container Registry (`*.azurecr.io`)
+  - Microsoft Container Registry (`mcr.microsoft.com`)
 - **MCPB**: `https://github.com` releases and `https://gitlab.com` releases only
 
 ## `_meta` Namespace Restrictions
