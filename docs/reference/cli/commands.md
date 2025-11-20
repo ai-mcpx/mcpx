@@ -2,7 +2,7 @@
 
 Complete command reference for the `mcp-publisher` CLI tool.
 
-See the [publishing guide](../../guides/publishing/publish-server.md) for a walkthrough of using the CLI to publish a server.
+See the [publishing guide](../../modelcontextprotocol-io/quickstart.mdx) for a walkthrough of using the CLI to publish a server.
 
 ## Installation
 
@@ -72,7 +72,7 @@ mcp-publisher login github-oidc [--registry=URL]
 - Requires `id-token: write` permission in workflow
 - No browser interaction needed
 
-Also see [the guide to publishing from GitHub Actions](../../guides/publishing/github-actions.md).
+Also see [the guide to publishing from GitHub Actions](../../modelcontextprotocol-io/github-actions.mdx).
 
 #### DNS Verification
 ```bash
@@ -211,7 +211,7 @@ mcp-publisher login none [--registry=URL]
 
 Publish server to the registry.
 
-For detailed guidance on the publishing process, see the [publishing guide](../../guides/publishing/publish-server.md).
+For detailed guidance on the publishing process, see the [publishing guide](../../modelcontextprotocol-io/quickstart.mdx).
 
 **Usage:**
 ```bash

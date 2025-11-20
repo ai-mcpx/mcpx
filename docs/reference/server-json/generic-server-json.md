@@ -3,7 +3,7 @@
 A `server.json` file is a standardized way to describe MCP servers for registry publishing, client discovery, and package management.
 
 Also see:
-- For step-by-step instructions on creating and using server.json files, see the [publishing guide](../../guides/publishing/publish-server.md).
+- For step-by-step instructions on creating and using server.json files, see the [publishing guide](../../modelcontextprotocol-io/quickstart.mdx).
 - For understanding the validation requirements when publishing to the official registry, see [official registry requirements](./official-registry-requirements.md).
 
 ## Browse the Complete Schema
