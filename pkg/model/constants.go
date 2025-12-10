@@ -16,7 +16,7 @@ const (
 const (
 	RegistryURLNPM    = "https://registry.npmjs.org"
 	RegistryURLPyPI   = "https://pypi.org"
-	RegistryURLNuGet  = "https://api.nuget.org"
+	RegistryURLNuGet  = "https://api.nuget.org/v3/index.json"
 	RegistryURLGitHub = "https://github.com"
 	RegistryURLGitLab = "https://gitlab.com"
 	RegistryURLDocker = "https://registry-1.docker.io"
