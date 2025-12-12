@@ -688,3 +688,90 @@ For MCP servers that follow a custom installation path or are embedded in applic
 }
 ```
 
+
+### Remote Server with URL Templating
+
+This example demonstrates URL templating for remote servers, useful for multi-tenant deployments where each instance has its own endpoint. Unlike Package transports (which reference parent arguments/environment variables), Remote transports define their own variables:
+
+```json
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
+  "name": "io.modelcontextprotocol.anonymous/multi-tenant-server",
+  "description": "MCP server with configurable remote endpoint",
+  "title": "Multi-Tenant Server",
+  "version": "1.0.0",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://anonymous.modelcontextprotocol.io/mcp/{tenant_id}",
+      "variables": {
+        "tenant_id": {
+          "description": "Tenant identifier (e.g., 'us-cell1', 'emea-cell1')",
+          "isRequired": true
+        }
+      }
+    }
+  ]
+}
+```
+
+Clients configure the tenant identifier, and the `{tenant_id}` variable in the URL gets replaced with the provided variable value to connect to the appropriate tenant endpoint (e.g., `https://anonymous.modelcontextprotocol.io/mcp/us-cell1` or `https://anonymous.modelcontextprotocol.io/mcp/emea-cell1`).
+
+The same URL templating works with SSE transport:
+
+```json
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
+  "name": "io.modelcontextprotocol.anonymous/events-server",
+  "description": "MCP server using SSE with tenant-specific endpoints",
+  "version": "1.0.0",
+  "remotes": [
+    {
+      "type": "sse",
+      "url": "https://events.anonymous.modelcontextprotocol.io/sse/{tenant_id}",
+      "variables": {
+        "tenant_id": {
+          "description": "Tenant identifier",
+          "isRequired": true
+        }
+      }
+    }
+  ]
+}
+```
+
+### Local Server with URL Templating
+
+This example demonstrates URL templating for local/package servers, where variables reference parent Package arguments or environment variables:
+
+```json
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
+  "name": "io.github.example/configurable-server",
+  "description": "Local MCP server with configurable port",
+  "title": "Configurable Server",
+  "version": "1.0.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "@example/mcp-server",
+      "version": "1.0.0",
+      "transport": {
+        "type": "streamable-http",
+        "url": "http://localhost:{--port}/mcp"
+      },
+      "packageArguments": [
+        {
+          "type": "named",
+          "name": "--port",
+          "description": "Port for the server to listen on",
+          "default": "3000"
+        }
+      ]
+    }
+  ]
+}
+```
+
+The `{--port}` variable in the URL references the `--port` argument `name` from packageArguments. For positional arguments, an argument with the `valueHint` of `port` could similarly be referenced as `{port}`. When the package runs with `--port 8080`, the URL becomes `http://localhost:8080/mcp`.
