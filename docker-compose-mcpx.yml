@@ -55,6 +55,7 @@ services:
       - 5173:5173
     environment:
       - NODE_ENV=production
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://mcpx:8080}
     networks:
       - mcpx-network
     restart: unless-stopped
