@@ -1,6 +1,6 @@
 module github.com/modelcontextprotocol/registry
 
-go 1.24.12
+go 1.24.13
 
 require (
 	cloud.google.com/go/kms v1.25.0
@@ -16,7 +16,7 @@ require (
 	github.com/rs/cors v1.11.1
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/stretchr/testify v1.11.1
-	go.opentelemetry.io/contrib/instrumentation/runtime v0.64.0
+	go.opentelemetry.io/contrib/instrumentation/runtime v0.65.0
 	go.opentelemetry.io/otel v1.40.0
 	go.opentelemetry.io/otel/exporters/prometheus v0.62.0
 	go.opentelemetry.io/otel/metric v1.40.0
