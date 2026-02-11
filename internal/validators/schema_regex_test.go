@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const serverSchemaPath = "../../docs/reference/server-json/server.schema.json"
+const serverSchemaPath = "../../docs/reference/server-json/draft/server.schema.json"
 
 // schemaHelper provides utilities for extracting values from the JSON schema
 type schemaHelper struct {
